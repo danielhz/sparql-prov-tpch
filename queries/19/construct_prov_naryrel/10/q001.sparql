@@ -1,0 +1,115 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+CONSTRUCT {
+  ?row
+    <a1> ?revenue ;
+    prov:wasDerivedFrom ?p_Sum .
+  ?p_Sum a <polynomial/Sum> ;
+    <polynomial/summand> ?p_Sum_summand_Product .
+  ?p_Sum_summand_Product a <polynomial/Product> ;
+    <polynomial/factor>
+      ?p_Sum_summand_Product_factor_1_Statement ,
+      ?p_Sum_summand_Product_factor_2_Statement .
+  ?p_Sum_summand_Product_factor_1_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_2_Statement a <polynomial/Statement> .
+}
+WHERE {
+  {
+    SELECT
+      (sum(?l_extendedprice* (1 - ?l_discount)) as ?revenue)
+    WHERE {
+      ?lineitem <l_part>          ?part ;
+		<l_quantity>      ?l_quantity ;
+		<l_shipmode>      ?l_shipmode ;
+		<l_shipinstruct>  ?l_shipinstruct ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount .
+      ?part     <p_brand>         ?p_brand ;
+		<p_container>     ?p_container ;
+		<p_size>          ?p_size .
+      FILTER (
+	(
+	  ?p_brand = 'Brand13' &&
+	  ?p_container IN ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG') &&
+	  ?l_quantity >= 6 && ?l_quantity <= 6 + 10 &&
+	  ?p_size >= 1 && ?p_size <= 5 &&
+	  ?l_shipmode IN ('AIR', 'AIR REG') &&
+	  ?l_shipinstruct = 'DELIVER IN PERSON'
+	)
+	||
+	(
+	  ?p_brand = 'Brand#43' &&
+	  ?p_container IN ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK') &&
+	  ?l_quantity >= 11 && ?l_quantity <= 11 + 10 &&
+	  ?p_size >= 1 && ?p_size <= 10 &&
+	  ?l_shipmode IN ('AIR', 'AIR REG') &&
+	  ?l_shipinstruct = 'DELIVER IN PERSON'
+	)
+	||
+	(
+	  ?p_brand = 'Brand#55' &&
+	  ?p_container IN ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG') &&
+	  ?l_quantity >= 27 && ?l_quantity <= 27 + 10 &&
+	  ?p_size >= 1 && ?p_size <= 15 &&
+	  ?l_shipmode IN ('AIR', 'AIR REG') &&
+	  ?l_shipinstruct = 'DELIVER IN PERSON'
+	)
+      )
+    }
+  } . {
+    SELECT
+      ?p_Sum
+      ?p_Sum_summand_Product
+      ?p_Sum_summand_Product_factor_1_Statement
+      ?p_Sum_summand_Product_factor_2_Statement
+    WHERE {
+      ?lineitem <l_part>          ?part ;
+		<l_quantity>      ?l_quantity ;
+		<l_shipmode>      ?l_shipmode ;
+		<l_shipinstruct>  ?l_shipinstruct ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount .
+      ?part     <p_brand>         ?p_brand ;
+		<p_container>     ?p_container ;
+		<p_size>          ?p_size .
+      FILTER (
+	(
+	  ?p_brand = 'Brand13' &&
+	  ?p_container IN ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG') &&
+	  ?l_quantity >= 6 && ?l_quantity <= 6 + 10 &&
+	  ?p_size >= 1 && ?p_size <= 5 &&
+	  ?l_shipmode IN ('AIR', 'AIR REG') &&
+	  ?l_shipinstruct = 'DELIVER IN PERSON'
+	)
+	||
+	(
+	  ?p_brand = 'Brand#43' &&
+	  ?p_container IN ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK') &&
+	  ?l_quantity >= 11 && ?l_quantity <= 11 + 10 &&
+	  ?p_size >= 1 && ?p_size <= 10 &&
+	  ?l_shipmode IN ('AIR', 'AIR REG') &&
+	  ?l_shipinstruct = 'DELIVER IN PERSON'
+	)
+	||
+	(
+	  ?p_brand = 'Brand#55' &&
+	  ?p_container IN ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG') &&
+	  ?l_quantity >= 27 && ?l_quantity <= 27 + 10 &&
+	  ?p_size >= 1 && ?p_size <= 15 &&
+	  ?l_shipmode IN ('AIR', 'AIR REG') &&
+	  ?l_shipinstruct = 'DELIVER IN PERSON'
+	)
+      )
+      BIND (?lineitem AS ?p_Sum_summand_Product_factor_1_Statement)
+      BIND (?part     AS ?p_Sum_summand_Product_factor_2_Statement)
+      BIND (URI(concat(
+        "http://example.org/p_Sum_summand_Product/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement))
+      )) AS ?p_Sum_summand_Product)
+      BIND (URI("http://example.org/p_Sum/") AS ?p_Sum)
+    }
+  }
+  BIND (URI("http://example.org/row/") AS ?row)
+}

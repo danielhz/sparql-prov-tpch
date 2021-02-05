@@ -1,0 +1,43 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT
+  ?order
+  ?o_orderdate
+  ?o_shippriority
+  ?p_Sum
+  ?p_Sum_summand_Product
+  ?p_Sum_summand_Product_factor_1_Statement
+  ?p_Sum_summand_Product_factor_2_Statement
+  ?p_Sum_summand_Product_factor_3_Statement
+WHERE {
+   {
+     ?customer
+       <c_mktsegment> 'FURNITURE' .
+     ?order
+       <o_cust> ?customer ;
+       <o_orderdate> ?o_orderdate ;
+       <o_shippriority> ?o_shippriority .
+     ?lineitem
+       <l_order> ?order ;
+       <l_shipdate> ?l_shipdate ;
+       <l_extendedprice> ?l_extendedprice ;
+       <l_discount> ?l_discount .
+   }
+   BIND (?customer AS ?p_Sum_summand_Product_factor_1_Statement)
+   BIND (?order    AS ?p_Sum_summand_Product_factor_2_Statement)
+   BIND (?lineitem AS ?p_Sum_summand_Product_factor_3_Statement)
+   FILTER (?o_orderdate < "1995-03-11T00:00:00"^^xsd:dateTime &&
+           ?l_shipdate > "1995-03-11T00:00:00"^^xsd:dateTime)
+   BIND (URI(concat(
+      "http://example.org/p_Sum_summand_Product/",
+      "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+      "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement)),
+      "&s3=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_3_Statement))
+   )) AS ?p_Sum_summand_Product)
+   BIND (URI(concat(
+      "http://example.org/p_Sum/",
+      "?s1=", ENCODE_FOR_URI(xsd:string(?order)),
+      "&s2=", ENCODE_FOR_URI(xsd:string(?o_orderdate)),
+      "&s3=", ENCODE_FOR_URI(xsd:string(?o_shippriority))
+   )) AS ?p_Sum)
+}

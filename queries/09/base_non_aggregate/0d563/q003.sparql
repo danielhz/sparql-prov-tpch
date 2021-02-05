@@ -1,0 +1,23 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT
+  ?nation
+  ?o_year
+WHERE {
+  ?part     <p_name>          ?p_name .
+  ?supplier <s_nation>        ?n .
+  ?lineitem <l_supp>          ?supplier ;
+            <l_part>          ?part ;
+            <l_order>         ?order ;
+            <l_extendedprice> ?l_extendedprice ;
+            <l_discount>      ?l_discount ;
+            <l_quantity>      ?l_quantity .
+  ?partsupp <ps_supp>         ?supplier ;
+            <ps_part>         ?part ;
+            <ps_supplycost>   ?ps_supplycost .
+  ?order    <o_orderdate>     ?o_orderdate .
+  ?n        <n_name>          ?nation .
+  FILTER (contains(?p_name, 'thistle'))
+  BIND (year(?o_orderdate) AS ?o_year)
+  BIND ((?l_extendedprice * (1 - ?l_discount) - ?ps_supplycost * ?l_quantity) AS ?amount)
+}

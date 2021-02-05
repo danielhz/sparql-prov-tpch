@@ -1,0 +1,20 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT
+  ?l_shipmode
+  (sum(if((?o_orderpriority = '1-URGENT' || ?o_orderpriority = '2-HIGH'), 1, 0)) AS ?high_line_count)
+  (sum(if((?o_orderpriority != '1-URGENT' && ?o_orderpriority != '2-HIGH'), 1, 0)) AS ?low_line_count)
+WHERE {
+  ?order    <o_orderpriority> ?o_orderpriority .
+  ?lineitem <l_order>         ?order ;
+            <l_shipmode>      ?l_shipmode ;
+            <l_commitdate>    ?l_commitdate ;
+            <l_receiptdate>   ?l_receiptdate ;
+            <l_shipdate>      ?l_shipdate .
+  FILTER (?l_shipmode IN ("FOB", "AIR") &&
+          ?l_commitdate < ?l_receiptdate &&
+          ?l_shipdate < ?l_commitdate &&
+          ?l_receiptdate >= "1994-01-01T00:00:00"^^xsd:dateTime &&
+          ?l_receiptdate < "1995-01-01T00:00:00"^^xsd:dateTime)
+}
+GROUP BY ?l_shipmode

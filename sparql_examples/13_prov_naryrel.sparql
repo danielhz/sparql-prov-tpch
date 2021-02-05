@@ -1,0 +1,53 @@
+BASE <http://example.org/>
+SELECT ?c_count ?custdist
+  ?p_Sum
+  ?p_Sum_summand_Product
+  ?p_Sum_summand_Product_factor_1_Statement
+  ?p_Sum_summand_Product_factor_2_Statement
+WHERE {
+  {
+    SELECT ?c_count (count(*) as ?custdist)
+    WHERE {
+      SELECT ?customer (count(?order) as ?c_count)
+      WHERE {
+        { ?customer a </Customer> . }
+        OPTIONAL
+        {
+          ?order <o_cust> ?customer ;
+                 <o_comment> ?o_comment .
+          FILTER (!regex(?o_comment, 'special.*packages'))
+        }
+      }
+      group by ?customer
+    }
+    group by ?c_count
+  } . {
+    SELECT ?c_count
+    WHERE {
+      {
+        SELECT ?customer  (count(?order) as ?c_count)
+        WHERE {
+          { ?customer a </Customer> . }
+          OPTIONAL
+          {
+            ?order <o_cust> ?customer ;
+                   <o_comment> ?o_comment .
+            FILTER (!regex(?o_comment, 'special.*packages'))
+          }
+        }
+        group by ?customer
+      } . {
+        SELECT ?customer
+        WHERE {
+          { ?customer a </Customer> . }
+          OPTIONAL
+          {
+            ?order <o_cust> ?customer ;
+                   <o_comment> ?o_comment .
+            FILTER (!regex(?o_comment, 'special.*packages'))
+          }
+        }
+      }
+    }
+  }
+}

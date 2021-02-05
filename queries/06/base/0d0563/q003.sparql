@@ -1,0 +1,15 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT
+  (sum(?l_extendedprice * ?l_discount) as ?revenue)
+WHERE {
+  ?lineitem <l_extendedprice> ?l_extendedprice ;
+            <l_discount>      ?l_discount ;
+            <l_shipdate>      ?l_shipdate ;
+            <l_quantity>      ?l_quantity .
+  FILTER (?l_shipdate >= "1993-01-01T00:00:00"^^xsd:dateTime &&
+          ?l_shipdate < "1994-01-01T00:00:00"^^xsd:dateTime &&
+	  ?l_discount >= 0.01 &&
+          ?l_discount <= 0.03 &&
+	  ?l_quantity < 24)
+}

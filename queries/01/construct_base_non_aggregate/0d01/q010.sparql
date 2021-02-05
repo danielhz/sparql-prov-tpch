@@ -1,0 +1,22 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?row
+    <a1> ?l_returnflag ;
+    <a2> ?l_linestatus .
+}
+WHERE {
+  ?lineitem <l_quantity>      ?l_quantity ;
+            <l_tax>           ?l_tax ;
+            <l_shipdate>      ?l_shipdate ;
+            <l_extendedprice> ?l_extendedprice ;
+            <l_discount>      ?l_discount ;
+            <l_returnflag>    ?l_returnflag ;
+            <l_linestatus>    ?l_linestatus .
+  FILTER (?l_shipdate <= "1998-09-13T00:00:00"^^xsd:dateTime)
+  BIND (URI(concat(
+    "http://example.org/row/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?l_returnflag)),
+    "&s2=", ENCODE_FOR_URI(xsd:string(?l_linestatus))
+  )) AS ?row)
+}

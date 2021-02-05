@@ -1,0 +1,128 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+CONSTRUCT {
+  ?row
+    <a1> ?customer ;
+    <a2> ?c_name ;
+    <a3> ?revenue ;
+    <a4> ?c_acctbal ;
+    <a5> ?n_name ;
+    <a6> ?c_address ;
+    <a7> ?c_phone ;
+    <a8> ?c_comment ;
+    prov:wasDerivedFrom ?p_Sum .
+  ?p_Sum a <polynomial/Sum> ;
+    <polynomial/summand> ?p_Sum_summand_Product .
+  ?p_Sum_summand_Product a <polynomial/Product> ;
+    <polynomial/factor>
+      ?p_Sum_summand_Product_factor_1_Statement ,
+      ?p_Sum_summand_Product_factor_2_Statement ,
+      ?p_Sum_summand_Product_factor_3_Statement ,
+      ?p_Sum_summand_Product_factor_4_Statement .
+  ?p_Sum_summand_Product_factor_1_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_2_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_3_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_4_Statement a <polynomial/Statement> .
+}
+WHERE {
+  {
+    SELECT
+      ?customer
+      ?c_name
+      (sum(?l_extendedprice * (1 - ?l_discount)) as ?revenue)
+      ?c_acctbal
+      ?n_name
+      ?c_address
+      ?c_phone
+      ?c_comment
+    WHERE {
+      ?customer <c_nation>        ?nation ;
+		<c_name>          ?c_name ;
+		<c_acctbal>       ?c_acctbal ;
+		<c_phone>         ?c_phone ;
+		<c_address>       ?c_address ;
+		<c_comment>       ?c_comment .
+      ?orders   <o_cust>          ?customer ;
+		<o_orderdate>     ?o_orderdate .
+      ?lineitem <l_order>         ?order ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount ;
+		<l_returnflag>    'R' .
+      ?nation   <n_name>          ?n_name .
+      FILTER (?o_orderdate >= "1993-09-01T00:00:00"^^xsd:dateTime &&
+	      ?o_orderdate < "1993-12-01T00:00:00"^^xsd:dateTime)
+    }
+    GROUP BY
+      ?customer
+      ?c_name
+      ?c_acctbal
+      ?c_phone
+      ?n_name
+      ?c_address
+      ?c_comment
+  } . {
+    SELECT
+      ?customer
+      ?c_name
+      ?c_acctbal
+      ?n_name
+      ?c_address
+      ?c_phone
+      ?c_comment
+      ?p_Sum
+      ?p_Sum_summand_Product
+      ?p_Sum_summand_Product_factor_1_Statement
+      ?p_Sum_summand_Product_factor_2_Statement
+      ?p_Sum_summand_Product_factor_3_Statement
+      ?p_Sum_summand_Product_factor_4_Statement
+    WHERE {
+      ?customer <c_nation>        ?nation ;
+		<c_name>          ?c_name ;
+		<c_acctbal>       ?c_acctbal ;
+		<c_phone>         ?c_phone ;
+		<c_address>       ?c_address ;
+		<c_comment>       ?c_comment .
+      ?order    <o_cust>          ?customer ;
+		<o_orderdate>     ?o_orderdate .
+      ?lineitem <l_order>         ?order ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount ;
+		<l_returnflag>    'R' .
+      ?nation   <n_name>          ?n_name .
+      FILTER (?o_orderdate >= "1993-09-01T00:00:00"^^xsd:dateTime &&
+	      ?o_orderdate < "1993-12-01T00:00:00"^^xsd:dateTime)
+      BIND (?customer AS ?p_Sum_summand_Product_factor_1_Statement)
+      BIND (?order    AS ?p_Sum_summand_Product_factor_2_Statement)
+      BIND (?lineitem AS ?p_Sum_summand_Product_factor_3_Statement)
+      BIND (?nation   AS ?p_Sum_summand_Product_factor_4_Statement)
+      BIND (URI(concat(
+        "http://example.org/p_Sum_summand_Product/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement)),
+        "&s3=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_3_Statement)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_4_Statement))
+      )) AS ?p_Sum_summand_Product)
+      BIND (URI(concat(
+        "http://example.org/p_Sum/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?customer)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?c_name)),
+        "&s3=", ENCODE_FOR_URI(xsd:string(?c_acctbal)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?n_name)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?c_address)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?c_phone)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?c_comment))
+      )) AS ?p_Sum)
+    }
+  }
+  BIND (URI(concat(
+    "http://example.org/row/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?customer)),
+    "&s2=", ENCODE_FOR_URI(xsd:string(?c_name)),
+    "&s3=", ENCODE_FOR_URI(xsd:string(?c_acctbal)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?n_name)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?c_address)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?c_phone)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?c_comment))
+  )) AS ?row)
+}

@@ -1,0 +1,115 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+CONSTRUCT {
+  ?row
+    <a1> ?o_year ;
+    <a1> ?mkt_share ;
+    prov:wasDerivedFrom ?p_Sum .
+  ?p_Sum a <polynomial/Sum> ;
+    <polynomial/summand> ?p_Sum_summand_Product .
+  ?p_Sum_summand_Product a <polynomial/Product> ;
+    <polynomial/factor>
+      ?p_Sum_summand_Product_factor_1_Statement ,
+      ?p_Sum_summand_Product_factor_2_Statement ,
+      ?p_Sum_summand_Product_factor_3_Statement ,
+      ?p_Sum_summand_Product_factor_4_Statement ,
+      ?p_Sum_summand_Product_factor_5_Statement ,
+      ?p_Sum_summand_Product_factor_6_Statement ,
+      ?p_Sum_summand_Product_factor_7_Statement ,
+      ?p_Sum_summand_Product_factor_8_Statement .
+  ?p_Sum_summand_Product_factor_1_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_2_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_3_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_4_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_5_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_6_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_7_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_8_Statement a <polynomial/Statement> .
+}
+WHERE {
+  {
+    SELECT
+      ?o_year
+      ((sum(if((?nation = "MOZAMBIQUE"), ?volume, 0)) / sum(?volume)) AS ?mkt_share)
+    WHERE {
+      ?part     <p_type>          "PROMO POLISHED TIN" .
+      ?supplier <s_nation>        ?n2 .
+      ?lineitem <l_part>          ?part ;
+		<l_supp>          ?supplier ;
+		<l_order>         ?order ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount .
+      ?order    <o_cust>          ?customer ;
+		<o_orderdate>     ?o_orderdate .
+      ?customer <c_nation>        ?n1 .
+      ?n1       <n_region>        ?region .
+      ?n2       <n_name>          ?nation .
+      ?region   <r_name>          "AFRICA" .
+      FILTER (?o_orderdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+	      ?o_orderdate <=  "1996-12-31T00:00:00"^^xsd:dateTime)
+      BIND(year(?o_orderdate) AS ?o_year)
+      BIND((?l_extendedprice * (1 - ?l_discount)) AS ?volume)
+    }
+    GROUP BY ?o_year
+  } . {
+    SELECT
+      ?o_year
+      ?p_Sum
+      ?p_Sum_summand_Product
+      ?p_Sum_summand_Product_factor_1_Statement
+      ?p_Sum_summand_Product_factor_2_Statement
+      ?p_Sum_summand_Product_factor_3_Statement
+      ?p_Sum_summand_Product_factor_4_Statement
+      ?p_Sum_summand_Product_factor_5_Statement
+      ?p_Sum_summand_Product_factor_6_Statement
+      ?p_Sum_summand_Product_factor_7_Statement
+      ?p_Sum_summand_Product_factor_8_Statement
+    WHERE {
+      ?part     <p_type>          "PROMO POLISHED TIN" .
+      ?supplier <s_nation>        ?n2 .
+      ?lineitem <l_part>          ?part ;
+                <l_supp>          ?supplier ;
+                <l_order>         ?order ;
+                <l_extendedprice> ?l_extendedprice ;
+                <l_discount>      ?l_discount .
+      ?order    <o_cust>          ?customer ;
+                <o_orderdate>     ?o_orderdate .
+      ?customer <c_nation>        ?n1 .
+      ?n1       <n_region>        ?region .
+      ?n2       <n_name>          ?nation .
+      ?region   <r_name>          "AFRICA" .
+      FILTER (?o_orderdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+	      ?o_orderdate <=  "1996-12-31T00:00:00"^^xsd:dateTime)
+      BIND (year(?o_orderdate) AS ?o_year)
+      BIND ((?l_extendedprice * (1 - ?l_discount)) AS ?volume)
+      BIND (?part     AS ?p_Sum_summand_Product_factor_1_Statement)
+      BIND (?supplier AS ?p_Sum_summand_Product_factor_2_Statement)
+      BIND (?lineitem AS ?p_Sum_summand_Product_factor_3_Statement)
+      BIND (?order    AS ?p_Sum_summand_Product_factor_4_Statement)
+      BIND (?customer AS ?p_Sum_summand_Product_factor_5_Statement)
+      BIND (?n1       AS ?p_Sum_summand_Product_factor_6_Statement)
+      BIND (?n2       AS ?p_Sum_summand_Product_factor_7_Statement)
+      BIND (?region   AS ?p_Sum_summand_Product_factor_8_Statement)
+      BIND (URI(concat(
+        "http://example.org/p_Sum_summand_Product/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement)),
+        "&s3=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_3_Statement)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_4_Statement)),
+        "&s5=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_5_Statement)),
+        "&s6=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_6_Statement)),
+        "&s6=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_7_Statement)),
+        "&s6=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_8_Statement))
+      )) AS ?p_Sum_summand_Product)
+      BIND (URI(concat(
+        "http://example.org/p_Sum/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?o_year))
+      )) AS ?p_Sum)
+    }
+  }
+  BIND (URI(concat(
+    "http://example.org/row/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?o_year))
+  )) AS ?row)
+}

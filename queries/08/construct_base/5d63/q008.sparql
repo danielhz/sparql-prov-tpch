@@ -1,0 +1,38 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?row
+    <a1> ?o_year ;
+    <a2> ?mkt_share .
+}
+WHERE {
+  {
+    SELECT
+      ?o_year
+      ((sum(if((?nation = "IRAN"), ?volume, 0)) / sum(?volume)) AS ?mkt_share)
+    WHERE {
+      ?part     <p_type>          "MEDIUM BRUSHED NICKEL" .
+      ?supplier <s_nation>        ?n2 .
+      ?lineitem <l_part>          ?part ;
+                <l_supp>          ?supplier ;
+                <l_order>         ?order ;
+                <l_extendedprice> ?l_extendedprice ;
+                <l_discount>      ?l_discount .
+      ?order    <o_cust>          ?customer ;
+                <o_orderdate>     ?o_orderdate .
+      ?customer <c_nation>        ?n1 .
+      ?n1       <n_region>        ?region .
+      ?n2       <n_name>          ?nation . 
+      ?region   <r_name>          "MIDDLE EAST" .
+      FILTER (?o_orderdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+              ?o_orderdate <=  "1996-12-31T00:00:00"^^xsd:dateTime)
+      BIND(year(?o_orderdate) AS ?o_year)
+      BIND((?l_extendedprice * (1 - ?l_discount)) AS ?volume)
+    }
+    GROUP BY ?o_year
+  }
+  BIND (URI(concat(
+    "http://example.org/row/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?o_year))
+  )) AS ?row)
+}

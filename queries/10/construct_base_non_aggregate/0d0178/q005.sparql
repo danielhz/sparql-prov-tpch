@@ -1,0 +1,39 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?row
+    <a1> ?customer ;
+    <a2> ?c_name ;
+    <a3> ?c_acctbal ;
+    <a4> ?n_name ;
+    <a5> ?c_address ;
+    <a6> ?c_phone ;
+    <a7> ?c_comment .
+}
+WHERE {
+  ?customer <c_nation>        ?nation ;
+            <c_name>          ?c_name ;
+            <c_acctbal>       ?c_acctbal ;
+            <c_phone>         ?c_phone ;
+            <c_address>       ?c_address ;
+            <c_comment>       ?c_comment .
+  ?order    <o_cust>          ?customer ;
+            <o_orderdate>     ?o_orderdate .
+  ?lineitem <l_order>         ?order ;
+            <l_extendedprice> ?l_extendedprice ;
+            <l_discount>      ?l_discount ;
+            <l_returnflag>    'R' .
+  ?nation   <n_name>          ?n_name .
+  FILTER (?o_orderdate >= "1994-12-01T00:00:00"^^xsd:dateTime &&
+	  ?o_orderdate < "1995-03-01T00:00:00"^^xsd:dateTime)
+  BIND (URI(concat(
+    "http://example.org/row/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?customer)),
+    "&s2=", ENCODE_FOR_URI(xsd:string(?c_name)),
+    "&s3=", ENCODE_FOR_URI(xsd:string(?c_acctbal)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?n_name)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?c_address)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?c_phone)),
+    "&s4=", ENCODE_FOR_URI(xsd:string(?c_comment))
+  )) AS ?row)
+}

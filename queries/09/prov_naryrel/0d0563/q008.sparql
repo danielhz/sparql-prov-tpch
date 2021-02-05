@@ -1,0 +1,90 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT
+  ?nation
+  ?o_year
+  ?sum_profit
+  ?p_Sum
+  ?p_Sum_summand_Product
+  ?p_Sum_summand_Product_factor_1_Statement
+  ?p_Sum_summand_Product_factor_2_Statement
+  ?p_Sum_summand_Product_factor_3_Statement
+  ?p_Sum_summand_Product_factor_4_Statement
+  ?p_Sum_summand_Product_factor_5_Statement
+  ?p_Sum_summand_Product_factor_6_Statement
+WHERE {
+  {
+    SELECT
+      ?nation
+      ?o_year
+      (sum(?amount) AS ?sum_profit)
+    WHERE {
+      ?part     <p_name>          ?p_name .
+      ?supplier <s_nation>        ?n .
+      ?lineitem <l_supp>          ?supplier ;
+		<l_part>          ?part ;
+		<l_order>         ?order ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount ;
+		<l_quantity>      ?l_quantity .
+      ?partsupp <ps_supp>         ?supplier ;
+		<ps_part>         ?part ;
+		<ps_supplycost>   ?ps_supplycost .
+      ?orders   <o_orderdate>     ?o_orderdate .
+      ?n        <n_name>          ?nation .
+      FILTER (contains(?p_name, 'thistle'))
+      BIND (year(?o_orderdate) AS ?o_year)
+      BIND ((?l_extendedprice * (1 - ?l_discount) - ?ps_supplycost * ?l_quantity) AS ?amount)
+    }
+    GROUP BY ?nation ?o_year
+  } . {
+    SELECT
+      ?nation
+      ?o_year
+      ?p_Sum
+      ?p_Sum_summand_Product
+      ?p_Sum_summand_Product_factor_1_Statement
+      ?p_Sum_summand_Product_factor_2_Statement
+      ?p_Sum_summand_Product_factor_3_Statement
+      ?p_Sum_summand_Product_factor_4_Statement
+      ?p_Sum_summand_Product_factor_5_Statement
+      ?p_Sum_summand_Product_factor_6_Statement
+    WHERE {
+      ?part     <p_name>          ?p_name .
+      ?supplier <s_nation>        ?n .
+      ?lineitem <l_supp>          ?supplier ;
+		<l_part>          ?part ;
+		<l_order>         ?order ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount ;
+		<l_quantity>      ?l_quantity .
+      ?partsupp <ps_supp>         ?supplier ;
+		<ps_part>         ?part ;
+		<ps_supplycost>   ?ps_supplycost .
+      ?order    <o_orderdate>     ?o_orderdate .
+      ?n        <n_name>          ?nation .
+      FILTER (contains(?p_name, 'thistle'))
+      BIND (year(?o_orderdate) AS ?o_year)
+      BIND (?part     AS ?p_Sum_summand_Product_factor_1_Statement)
+      BIND (?supplier AS ?p_Sum_summand_Product_factor_2_Statement)
+      BIND (?lineitem AS ?p_Sum_summand_Product_factor_3_Statement)
+      BIND (?partsup  AS ?p_Sum_summand_Product_factor_4_Statement)
+      BIND (?order    AS ?p_Sum_summand_Product_factor_5_Statement)
+      BIND (?n        AS ?p_Sum_summand_Product_factor_6_Statement)
+      BIND (URI(concat(
+        "http://example.org/p_Sum_summand_Product/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement)),
+        "&s3=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_3_Statement)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_4_Statement)),
+        "&s5=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_5_Statement)),
+        "&s6=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_6_Statement))
+      )) AS ?p_Sum_summand_Product)
+      BIND (URI(concat(
+        "http://example.org/p_Sum/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?nation)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?o_year))
+      )) AS ?p_Sum)
+    }
+  }
+}

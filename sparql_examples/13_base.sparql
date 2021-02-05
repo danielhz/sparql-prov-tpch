@@ -1,0 +1,16 @@
+BASE <http://example.org/>
+SELECT ?c_count (count(*) as ?custdist)
+WHERE {
+  SELECT ?customer (count(?order) as ?c_count)
+  WHERE {
+    { ?customer a </Customer> . }
+    OPTIONAL
+    {
+      ?order <o_cust> ?customer ;
+             <o_comment> ?o_comment .
+      FILTER (!regex(?o_comment, 'special.*packages'))
+    }
+  }
+  group by ?customer
+}
+group by ?c_count

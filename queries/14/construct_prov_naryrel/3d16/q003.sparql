@@ -1,0 +1,56 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+CONSTRUCT {
+  ?row
+    <a1> ?promo_revenue ;
+    prov:wasDerivedFrom ?p_Sum .
+  ?p_Sum a <polynomial/Sum> ;
+    <polynomial/summand> ?p_Sum_summand_Product .
+  ?p_Sum_summand_Product a <polynomial/Product> ;
+    <polynomial/factor>
+      ?p_Sum_summand_Product_factor_1_Statement ,
+      ?p_Sum_summand_Product_factor_2_Statement .
+  ?p_Sum_summand_Product_factor_1_Statement a <polynomial/Statement> .
+  ?p_Sum_summand_Product_factor_2_Statement a <polynomial/Statement> .
+}
+WHERE {
+  {
+    SELECT
+      (((100.00 * sum(if(strstarts(?p_type, "PROMO"), ?l_extendedprice * (1 - ?l_discount), 0)))
+	/ sum(?l_extendedprice * (1 - ?l_discount))) AS ?promo_revenue)
+    WHERE {
+      ?lineitem <l_part>          ?part ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount ;
+		<l_shipdate>      ?l_shipdate .
+      ?part     <p_type>          ?p_type .
+      FILTER (?l_shipdate >= "1993-10-01T00:00:00"^^xsd:dateTime &&
+	      ?l_shipdate < "1993-11-01T00:00:00"^^xsd:dateTime)
+    }
+  } . {
+    SELECT
+      ?p_Sum
+      ?p_Sum_summand_Product
+      ?p_Sum_summand_Product_factor_1_Statement
+      ?p_Sum_summand_Product_factor_2_Statement
+    WHERE {
+      ?lineitem <l_part>          ?part ;
+		<l_extendedprice> ?l_extendedprice ;
+		<l_discount>      ?l_discount ;
+		<l_shipdate>      ?l_shipdate .
+      ?part     <p_type>          ?p_type .
+      BIND (?lineitem AS ?p_Sum_summand_Product_factor_1_Statement)
+      BIND (?part     AS ?p_Sum_summand_Product_factor_2_Statement)
+      FILTER (?l_shipdate >= "1993-10-01T00:00:00"^^xsd:dateTime &&
+	      ?l_shipdate < "1993-11-01T00:00:00"^^xsd:dateTime)
+      BIND (URI(concat(
+        "http://example.org/p_Sum_summand_Product/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement))
+      )) AS ?p_Sum_summand_Product)
+      BIND (URI("http://example.org/p_Sum/") AS ?p_Sum)
+    }
+  }
+  BIND (URI("http://example.org/row/") AS ?row)
+}

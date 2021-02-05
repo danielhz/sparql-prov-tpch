@@ -1,0 +1,51 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?row <a1> ?revenue .
+}
+WHERE {
+  {
+    SELECT
+      (sum(?l_extendedprice* (1 - ?l_discount)) as ?revenue)
+    WHERE {
+      ?lineitem <l_part>          ?part ;
+                <l_quantity>      ?l_quantity ;
+                <l_shipmode>      ?l_shipmode ;
+                <l_shipinstruct>  ?l_shipinstruct ;
+                <l_extendedprice> ?l_extendedprice ;
+                <l_discount>      ?l_discount .
+      ?part     <p_brand>         ?p_brand ;
+                <p_container>     ?p_container ;
+                <p_size>          ?p_size .
+      FILTER (
+        (
+          ?p_brand = 'Brand13' &&
+          ?p_container IN ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG') &&
+          ?l_quantity >= 6 && ?l_quantity <= 6 + 10 &&
+          ?p_size >= 1 && ?p_size <= 5 &&
+          ?l_shipmode IN ('AIR', 'AIR REG') &&
+          ?l_shipinstruct = 'DELIVER IN PERSON'
+        )
+        ||
+        (
+          ?p_brand = 'Brand#14' &&
+          ?p_container IN ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK') &&
+          ?l_quantity >= 13 && ?l_quantity <= 13 + 10 &&
+          ?p_size >= 1 && ?p_size <= 10 &&
+          ?l_shipmode IN ('AIR', 'AIR REG') &&
+          ?l_shipinstruct = 'DELIVER IN PERSON'
+        )
+        ||
+        (
+          ?p_brand = 'Brand#43' &&
+          ?p_container IN ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG') &&
+          ?l_quantity >= 30 && ?l_quantity <= 30 + 10 &&
+          ?p_size >= 1 && ?p_size <= 15 &&
+          ?l_shipmode IN ('AIR', 'AIR REG') &&
+          ?l_shipinstruct = 'DELIVER IN PERSON'
+        )
+      )
+    }
+  }
+  BIND (URI("http://example.org/row/") AS ?row)
+}

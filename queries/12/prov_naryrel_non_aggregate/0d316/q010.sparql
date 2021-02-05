@@ -1,0 +1,32 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT
+  ?l_shipmode
+  ?p_Sum
+  ?p_Sum_summand_Product
+  ?p_Sum_summand_Product_factor_1_Statement
+  ?p_Sum_summand_Product_factor_2_Statement
+WHERE {
+  ?order    <o_orderpriority> ?o_orderpriority .
+  ?lineitem <l_order>         ?order ;
+            <l_shipmode>      ?l_shipmode ;
+            <l_commitdate>    ?l_commitdate ;
+            <l_receiptdate>   ?l_receiptdate ;
+            <l_shipdate>      ?l_shipdate .
+  FILTER (?l_shipmode IN ('RAIL', 'TRUCK') &&
+          ?l_commitdate < ?l_receiptdate &&
+          ?l_shipdate < ?l_commitdate &&
+          ?l_receiptdate >= "1994-01-01"^^xsd:dateTime &&
+          ?l_receiptdate < "1995-01-01"^^xsd:dateTime)
+  BIND (?order    AS ?p_Sum_summand_Product_factor_1_Statement)
+  BIND (?lineitem AS ?p_Sum_summand_Product_factor_2_Statement)
+  BIND (URI(concat(
+    "http://example.org/p_Sum_summand_Product/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+    "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement))
+  )) AS ?p_Sum_summand_Product)
+  BIND (URI(concat(
+    "http://example.org/p_Sum/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?l_shipmode))
+  )) AS ?p_Sum)
+}

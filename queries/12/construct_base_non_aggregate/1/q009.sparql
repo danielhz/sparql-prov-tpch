@@ -1,0 +1,22 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+CONSTRUCT {
+  ?row <a1> ?l_shipmode .
+}
+WHERE {
+  ?order    <o_orderpriority> ?o_orderpriority .
+  ?lineitem <l_order>         ?order ;
+            <l_shipmode>      ?l_shipmode ;
+            <l_commitdate>    ?l_commitdate ;
+            <l_receiptdate>   ?l_receiptdate ;
+            <l_shipdate>      ?l_shipdate .
+  FILTER (?l_shipmode IN ('TRUCK', 'RAIL') &&
+	  ?l_commitdate < ?l_receiptdate &&
+	  ?l_shipdate < ?l_commitdate &&
+	  ?l_receiptdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+	  ?l_receiptdate < "1996-01-01T00:00:00"^^xsd:dateTime)
+  BIND (URI(concat(
+    "http://example.org/row/",
+    "?s1=", ENCODE_FOR_URI(xsd:string(?l_shipmode))
+  )) AS ?row)
+}

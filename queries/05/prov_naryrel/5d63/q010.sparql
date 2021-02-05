@@ -1,0 +1,85 @@
+BASE <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT
+  ?n_name
+  ?revenue
+  ?p_Sum
+  ?p_Sum_summand_Product
+  ?p_Sum_summand_Product_factor_1_Statement
+  ?p_Sum_summand_Product_factor_2_Statement
+  ?p_Sum_summand_Product_factor_3_Statement
+  ?p_Sum_summand_Product_factor_4_Statement
+  ?p_Sum_summand_Product_factor_5_Statement
+  ?p_Sum_summand_Product_factor_6_Statement
+WHERE {
+  {
+    SELECT
+      ?n_name
+      (sum(?l_extendedprice * (1 - ?l_discount)) as ?revenue)
+    WHERE {
+      {
+	?customer <c_nation>        ?nation .
+	?order    <o_cust>          ?customer ;
+		  <o_orderdate>     ?o_orderdate .
+	?lineitem <l_order>         ?order ;
+		  <l_supp>          ?supplier ;
+		  <l_extendedprice> ?l_extendedprice ;
+		  <l_discount>      ?l_discount .
+	?supplier <s_nation>        ?nation .
+	?nation   <n_name>          ?n_name ;
+		  <n_region>        ?region .
+	?region   <r_name>          "AFRICA" .
+      }
+      FILTER (?o_orderdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+	      ?o_orderdate <  "1996-01-01T00:00:00"^^xsd:dateTime)
+    }
+    GROUP BY ?n_name
+  } . {
+    SELECT
+      ?n_name
+      ?p_Sum
+      ?p_Sum_summand_Product
+      ?p_Sum_summand_Product_factor_1_Statement
+      ?p_Sum_summand_Product_factor_2_Statement
+      ?p_Sum_summand_Product_factor_3_Statement
+      ?p_Sum_summand_Product_factor_4_Statement
+      ?p_Sum_summand_Product_factor_5_Statement
+      ?p_Sum_summand_Product_factor_6_Statement
+    WHERE {
+      {
+	?customer <c_nation>        ?nation .
+	?order    <o_cust>          ?customer ;
+		  <o_orderdate>     ?o_orderdate .
+	?lineitem <l_order>         ?order ;
+		  <l_supp>          ?supplier ;
+		  <l_extendedprice> ?l_extendedprice ;
+		  <l_discount>      ?l_discount .
+	?supplier <s_nation>        ?nation .
+	?nation   <n_name>          ?n_name ;
+		  <n_region>        ?region .
+	?region   <r_name>          "AFRICA" .
+      }
+      BIND (?customer AS ?p_Sum_summand_Product_factor_1_Statement)
+      BIND (?order    AS ?p_Sum_summand_Product_factor_2_Statement)
+      BIND (?lineitem AS ?p_Sum_summand_Product_factor_3_Statement)
+      BIND (?supplier AS ?p_Sum_summand_Product_factor_4_Statement)
+      BIND (?nation   AS ?p_Sum_summand_Product_factor_5_Statement)
+      BIND (?region   AS ?p_Sum_summand_Product_factor_6_Statement)
+      FILTER (?o_orderdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+	      ?o_orderdate <  "1996-01-01T00:00:00"^^xsd:dateTime)
+      BIND (URI(concat(
+        "http://example.org/p_Sum_summand_Product/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),
+        "&s2=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_2_Statement)),
+        "&s3=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_3_Statement)),
+        "&s4=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_4_Statement)),
+        "&s5=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_5_Statement)),
+        "&s6=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_6_Statement))
+      )) AS ?p_Sum_summand_Product)
+      BIND (URI(concat(
+        "http://example.org/p_Sum/",
+        "?s1=", ENCODE_FOR_URI(xsd:string(?n_name))
+      )) AS ?p_Sum)
+    }
+  }
+}
