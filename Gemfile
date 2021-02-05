@@ -1,0 +1,4 @@
+source 'https://rubygems.org'
+gem 'net-ssh', '~> 6.1.0'
+gem 'ed25519', '1.2.4'
+gem 'bcrypt_pbkdf', '1.1.0'
