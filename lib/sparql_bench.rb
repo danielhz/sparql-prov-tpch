@@ -70,7 +70,6 @@ class LXDFusekiEndpoint < Endpoint
            "-c /home/ubuntu/apache-jena-fuseki-3.17.0 " +
            "-o stdout.log -e stderr.log " +
            "/home/ubuntu/apache-jena-fuseki-3.17.0/fuseki-server " +
-           "--set tdb:unionDefaultGraph=true " +
            "--loc=/home/ubuntu/tdb /ds'"
 
     loop do
@@ -112,29 +111,32 @@ class LXDVirtuosoEndpoint < Endpoint
   end
 end
 
-def watdiv_bench(endpoint, size, template, scheme, mode, times = 5)
-  puts "Starting workload #{[endpoint, size, template, scheme, mode].join('-')}"
+def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
+  puts "Starting workload #{[endpoint, scale_factor, template, mode].join('-')}"
   
   endpoint.start
-  queries = Dir[File.join('queries', size, template, scheme, mode, '*.sparql')].sort
+  queries = Dir[File.join('queries', template, mode, scale_factor, 'q*.sparql')].sort
 
   queries.each do |query|
     puts "warming up #{query}"
     answers = query.gsub('/', '-').sub('.sparql', '.csv').sub('queries-', "answers/#{endpoint.name}-")
+    FileUtils.mkdir_p('answers')
     File.open(answers, 'w') do |file|
       file.write endpoint.run_query(query)
     end
   end
 
-  results = "results/#{endpoint.name}-#{size}-#{template}-#{scheme}-#{mode}.csv"
+  results = "results/#{endpoint.name}-#{scale_factor}-#{template}-#{mode}.csv"
+  FileUtils.mkdir_p('results')
   CSV.open(results, 'w') do |csv|
-    csv << %w{engine size template scheme mode query_id repetition time status}
+    csv << %w{engine scale_factor template mode query_id repetition time status}
     (1..times).each do |repetition|
       queries.each do |query|
         puts "running query #{query} (repetition #{repetition})"
         out = endpoint.bench_query(query)
         query_name = File.basename(query).sub(/.sparql$/, '')
-        csv << [endpoint.name, size, template, scheme, mode, query_name, repetition, out[0], out[1]]
+        csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
+                query_name, repetition, out[0], out[1]]
       end
     end
   end
@@ -142,48 +144,3 @@ def watdiv_bench(endpoint, size, template, scheme, mode, times = 5)
   endpoint.stop
 end
 
-class TripleProvEndpoint
-  def initialize
-    @home = '/home/ubuntu/sparql-prov-watdiv/tripleprov_demo/release'
-  end
-
-  def name
-    'tripleprov'
-  end
-
-  def bench_query(file)
-    output = `cd #{@home} && ./tripleprov #{file}`
-    {body: output, time: output.lines.last.split.last}
-  end
-end
-
-def tripleprov_bench(size, template, times = 5)
-  endpoint = TripleProvEndpoint.new
-  scheme = 'namedgraphs'
-  mode = 'T'
-  
-  puts "Starting workload #{[endpoint.name, size, template, scheme, mode].join('-')}"
-
-  # tp.bench_query('/home/ubuntu/sparql-prov-watdiv/queries/10M/S2/namedgraphs/T/00.sparql')
-
-  queries = Dir[File.join('queries', size, template, scheme, mode, '*.sparql')].sort
-
-  results = "results/#{endpoint.name}-#{size}-#{template}-#{scheme}-#{mode}.csv"
-  CSV.open(results, 'w') do |csv|
-    csv << %w{engine size template scheme mode query_id repetition time status}
-    queries.each do |query|
-      (1..times).each do |repetition|
-        puts "Running query #{query} (repetition #{repetition})"
-        result = endpoint.bench_query(File.absolute_path query)
-        
-        answers = query.gsub('/', '-').sub('.sparql', '.csv').sub('queries-', "answers/#{endpoint.name}-")
-        File.open(answers, 'w') do |file|        
-          file.puts result[:body]
-        end
-
-        query_name = File.basename(query).sub(/.sparql$/, '')
-        csv << [endpoint.name, size, template, scheme, mode, query_name, repetition, result[:time], 200]
-      end
-    end
-  end
-end
