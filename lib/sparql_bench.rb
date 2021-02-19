@@ -117,17 +117,31 @@ def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
   endpoint.start
   queries = Dir[File.join('queries', template, mode, scale_factor, 'q*.sparql')].sort
 
+  results = "results/#{endpoint.name}-#{scale_factor}-#{template}-#{mode}.csv"
+  FileUtils.mkdir_p('results')
+  
   queries.each do |query|
     puts "warming up #{query}"
     answers = query.gsub('/', '-').sub('.sparql', '.csv').sub('queries-', "answers/#{endpoint.name}-")
     FileUtils.mkdir_p('answers')
-    File.open(answers, 'w') do |file|
-      file.write endpoint.run_query(query)
+    time = Benchmark.measure do
+      File.open(answers, 'w') do |file|
+        file.write endpoint.run_query(query)
+      end
+    end
+    if time > 300
+      puts "timout #{time}"
+      CSV.open(results, 'w') do |csv|
+        csv << %w{engine scale_factor template mode query_id repetition time status}
+        queries.each do |query|
+          query_name = File.basename(query).sub(/.sparql$/, '')
+          csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
+                  query_name, 1, 300, 500]
+        end
+      return
     end
   end
 
-  results = "results/#{endpoint.name}-#{scale_factor}-#{template}-#{mode}.csv"
-  FileUtils.mkdir_p('results')
   CSV.open(results, 'w') do |csv|
     csv << %w{engine scale_factor template mode query_id repetition time status}
     (1..times).each do |repetition|
