@@ -30,8 +30,8 @@ WHERE {
   BIND (?supplier AS ?p_Sum_summand_Product_factor_4_Statement)
   BIND (?nation   AS ?p_Sum_summand_Product_factor_5_Statement)
   BIND (?region   AS ?p_Sum_summand_Product_factor_6_Statement)
-  FILTER (?o_orderdate >= "1994-01-01T00:00:00"^^xsd:dateTime &&
-          ?o_orderdate <  "1995-01-01T00:00:00"^^xsd:dateTime)
+  FILTER (strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) >= "1994-01-01T00:00:00"^^xsd:dateTime &&
+          strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) <  "1995-01-01T00:00:00"^^xsd:dateTime)
   BIND (URI(concat(
     "http://example.org/p_Sum_summand_Product/",
     "?s1=", ENCODE_FOR_URI(xsd:string(?p_Sum_summand_Product_factor_1_Statement)),

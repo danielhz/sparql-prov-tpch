@@ -17,7 +17,7 @@ WHERE {
               <n_region>        ?region .
     ?region   <r_name>          "AFRICA" .
   }
-  FILTER (?o_orderdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
-          ?o_orderdate <  "1996-01-01T00:00:00"^^xsd:dateTime)
+  FILTER (strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+          strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) <  "1996-01-01T00:00:00"^^xsd:dateTime)
 }
 GROUP BY ?n_name
