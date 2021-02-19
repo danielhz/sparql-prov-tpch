@@ -3,6 +3,8 @@ require 'csv'
 require 'benchmark'
 
 class Endpoint
+  attr_accessor :timeout
+  
   def initialize(container, timeout = 3000)
     @container = container
     @timeout = timeout
@@ -33,7 +35,7 @@ class Endpoint
   end
 
   def run_query(file)
-    cmd = "curl -s -m #{@timeout} " +
+    cmd = "curl -s -m #{2 * @timeout} " +
           "--data-urlencode \"query=$(cat #{file})\" " +
           "-H \"Accept: text/csv\" #{endpoint_url}"
      `#{cmd}`
@@ -45,7 +47,7 @@ class Endpoint
           "--data-urlencode \"query=$(cat #{file})\" " +
           "-H \"Accept: text/csv\" #{endpoint_url}"
     time = Benchmark.measure { result << `#{cmd}` }
-    [[time.real, 300].min] + result
+    [time.real] + result
   end
 end
 
@@ -129,21 +131,25 @@ def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
         file.write endpoint.run_query(query)
       end
     end
-    if time.real > 300
-      puts "timout #{time.real}"
-      CSV.open(results, 'w') do |csv|
-        csv << %w{engine scale_factor template mode query_id repetition time status}
-        queries.each do |query|
-          query_name = File.basename(query).sub(/.sparql$/, '')
-          csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
-                  query_name, 1, 300, 500]
-        end
-      end
-      return
-    else
-      puts "warm up sucessfull #{time.real}"
-    end
   end
+
+  # puts "Reviewing if this query produces timeouts"
+  # out = endpoint.bench_query(queries.first)
+  # puts "result time=#{out[0]} status=#{out[1]}"
+  # if out[0] >= endpoint.timeout or out[1] != '200'
+  #   puts "timeout detected"
+  #   CSV.open(results, 'w') do |csv|
+  #     csv << %w{engine scale_factor template mode query_id repetition time status}
+  #     queries.each do |query|
+  #       query_name = File.basename(query).sub(/.sparql$/, '')
+  #       csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
+  #               query_name, 1, endpoint.timeout, 500]
+  #     end
+  #   end
+  #   return
+  # else
+  #   puts "no timeout"
+  # end
 
   CSV.open(results, 'w') do |csv|
     csv << %w{engine scale_factor template mode query_id repetition time status}
