@@ -129,8 +129,8 @@ def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
         file.write endpoint.run_query(query)
       end
     end
-    if time > 300
-      puts "timout #{time}"
+    if time.real > 300
+      puts "timout #{time.real}"
       CSV.open(results, 'w') do |csv|
         csv << %w{engine scale_factor template mode query_id repetition time status}
         queries.each do |query|
@@ -138,7 +138,10 @@ def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
           csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
                   query_name, 1, 300, 500]
         end
+      end
       return
+    else
+      puts "warm up sucessfull #{time.real}"
     end
   end
 
