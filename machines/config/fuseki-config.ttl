@@ -1,0 +1,31 @@
+PREFIX fuseki:  <http://jena.apache.org/fuseki#>
+PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX tdb1:    <http://jena.hpl.hp.com/2008/tdb#>
+PREFIX tdb2:    <http://jena.apache.org/2016/tdb#>
+PREFIX ja:      <http://jena.hpl.hp.com/2005/11/Assembler#>
+PREFIX :        <#>
+
+# Configuration of server-wide parameters.
+
+[] rdf:type fuseki:Server ;
+    # A timeout of 300 seconds.
+    ja:context [ ja:cxtName "arq:queryTimeout" ;  ja:cxtValue "300000" ] .
+
+
+# A simple Fuseki service allowing only SPARQL queries.
+
+:service1 rdf:type fuseki:Service ;
+    fuseki:name   "ds" ;       # http://host:port/ds
+    fuseki:endpoint [ 
+        # SPARQL query service
+        fuseki:operation fuseki:query ; 
+        fuseki:name "sparql"
+    ] ;
+    fuseki:dataset  :dataset .
+
+
+# The dataset is a TDB1 dataset.
+
+:dataset rdf:type tdb1:DatasetTDB ;
+    tdb1:location "/home/ubuntu/tdb" .

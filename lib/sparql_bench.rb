@@ -34,6 +34,7 @@ class Endpoint
     system "lxc stop #{@container}"
   end
 
+  # I use a double of the timeout because I manage the timeout in the service.
   def run_query(file)
     cmd = "curl -s -m #{2 * @timeout} " +
           "--data-urlencode \"query=$(cat #{file})\" " +
@@ -41,9 +42,10 @@ class Endpoint
      `#{cmd}`
   end
 
+  # I use a double of the timeout because I manage the timeout in the service.
   def bench_query(file)
     result = []
-    cmd = "curl -s -o /dev/null -w \"%{http_code}\" -m #{@timeout} " +
+    cmd = "curl -s -o /dev/null -w \"%{http_code}\" -m #{2 * @timeout} " +
           "--data-urlencode \"query=$(cat #{file})\" " +
           "-H \"Accept: text/csv\" #{endpoint_url}"
     time = Benchmark.measure { result << `#{cmd}` }
@@ -72,8 +74,7 @@ class LXDFusekiEndpoint < Endpoint
            "-c /home/ubuntu/apache-jena-fuseki-3.17.0 " +
            "-o stdout.log -e stderr.log " +
            "/home/ubuntu/apache-jena-fuseki-3.17.0/fuseki-server " +
-           "--loc=/home/ubuntu/tdb /ds'"
-
+           "--conf=/home/ubuntu/fuseki-config.ttl'"
     loop do
       sleep 1
       output = `lxc exec #{@container} -- netstat -tln | grep ':3030 '`
