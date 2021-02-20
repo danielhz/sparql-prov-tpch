@@ -30,8 +30,8 @@ WHERE {
       (?n1_n_name = 'BRAZIL' && ?n2_n_name = 'IRAN') ||
       (?n1_n_name = 'IRAN' && ?n2_n_name = 'BRAZIL')
     ) &&
-    ?l_shipdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
-    ?l_shipdate <= "1996-12-31T00:00:00"^^xsd:dateTime
+    strdt(concat(str(?l_shipdate), 'T00:00:00'), xsd:dateTime) >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+    strdt(concat(str(?l_shipdate), 'T00:00:00'), xsd:dateTime) <= "1996-12-31T00:00:00"^^xsd:dateTime
   )
   BIND(?n1_n_name AS ?supp_nation)
   BIND(?n2_n_name AS ?cust_nation)
