@@ -45,6 +45,7 @@ tpch.plot_select_by_template <- function(template_id) {
                                        & template == template_id
                                        & !grepl("construct", mode)),
     aes(x=scale_factor, y=time, fill=mode)) +
+    ggtitle(paste("Query template", template_id)) +
     facet_wrap(~engine, ncol = 2) +
     stat_summary(fun=mean, geom="bar",
                  position=position_dodge(preserve="single"), color="grey70") +
