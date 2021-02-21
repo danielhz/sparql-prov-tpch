@@ -162,6 +162,7 @@ def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
         query_name = File.basename(query).sub(/.sparql$/, '')
         csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
                 query_name, repetition, out[0], out[1]]
+        csv.flush
       end
     end
   end
