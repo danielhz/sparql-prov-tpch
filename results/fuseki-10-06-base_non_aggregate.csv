@@ -1,0 +1,7 @@
+engine,scale_factor,template,mode,query_id,repetition,time,status
+fuseki,10,06,base_non_aggregate,q001,1,300.0262655708939,400
+fuseki,10,06,base_non_aggregate,q002,1,300.0306006349856,400
+fuseki,10,06,base_non_aggregate,q003,1,300.0271468949504,400
+fuseki,10,06,base_non_aggregate,q004,1,300.02808931004256,400
+fuseki,10,06,base_non_aggregate,q005,1,300.0238222660264,400
+fuseki,10,06,base_non_aggregate,q006,1,300.0362104959786,400
