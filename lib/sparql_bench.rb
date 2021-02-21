@@ -3,6 +3,8 @@ require 'csv'
 require 'benchmark'
 
 class Endpoint
+  attr_accessor :timeout
+  
   def initialize(container, timeout = 3000)
     @container = container
     @timeout = timeout
@@ -32,20 +34,22 @@ class Endpoint
     system "lxc stop #{@container}"
   end
 
+  # I use a double of the timeout because I manage the timeout in the service.
   def run_query(file)
-    cmd = "curl -s -m #{@timeout} " +
+    cmd = "curl -s -m #{2 * @timeout} " +
           "--data-urlencode \"query=$(cat #{file})\" " +
           "-H \"Accept: text/csv\" #{endpoint_url}"
      `#{cmd}`
   end
 
+  # I use a double of the timeout because I manage the timeout in the service.
   def bench_query(file)
     result = []
-    cmd = "curl -s -o /dev/null -w \"%{http_code}\" -m #{@timeout} " +
+    cmd = "curl -s -o /dev/null -w \"%{http_code}\" -m #{2 * @timeout} " +
           "--data-urlencode \"query=$(cat #{file})\" " +
           "-H \"Accept: text/csv\" #{endpoint_url}"
     time = Benchmark.measure { result << `#{cmd}` }
-    [[time.real, 300].min] + result
+    [time.real] + result
   end
 end
 
@@ -70,8 +74,7 @@ class LXDFusekiEndpoint < Endpoint
            "-c /home/ubuntu/apache-jena-fuseki-3.17.0 " +
            "-o stdout.log -e stderr.log " +
            "/home/ubuntu/apache-jena-fuseki-3.17.0/fuseki-server " +
-           "--loc=/home/ubuntu/tdb /ds'"
-
+           "--conf=/home/ubuntu/fuseki-config.ttl'"
     loop do
       sleep 1
       output = `lxc exec #{@container} -- netstat -tln | grep ':3030 '`
@@ -117,17 +120,39 @@ def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
   endpoint.start
   queries = Dir[File.join('queries', template, mode, scale_factor, 'q*.sparql')].sort
 
+  results = "results/#{endpoint.name}-#{scale_factor}-#{template}-#{mode}.csv"
+  FileUtils.mkdir_p('results')
+
+  puts "Checking if this query produces timeouts"
+  out = endpoint.bench_query(queries.first)
+  puts "result time=#{out[0]} status=#{out[1]}"
+  if out[0] >= endpoint.timeout or out[1] != '200'
+    puts "timeout detected"
+    CSV.open(results, 'w') do |csv|
+      csv << %w{engine scale_factor template mode query_id repetition time status}
+      queries.each do |query|
+        query_name = File.basename(query).sub(/.sparql$/, '')
+        csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
+                query_name, 1, endpoint.timeout, 500]
+      end
+    end
+    endpoint.stop
+    return
+  else
+    puts "no timeout"
+  end
+  
   queries.each do |query|
     puts "warming up #{query}"
     answers = query.gsub('/', '-').sub('.sparql', '.csv').sub('queries-', "answers/#{endpoint.name}-")
     FileUtils.mkdir_p('answers')
-    File.open(answers, 'w') do |file|
-      file.write endpoint.run_query(query)
+    time = Benchmark.measure do
+      File.open(answers, 'w') do |file|
+        file.write endpoint.run_query(query)
+      end
     end
   end
 
-  results = "results/#{endpoint.name}-#{scale_factor}-#{template}-#{mode}.csv"
-  FileUtils.mkdir_p('results')
   CSV.open(results, 'w') do |csv|
     csv << %w{engine scale_factor template mode query_id repetition time status}
     (1..times).each do |repetition|
@@ -137,6 +162,7 @@ def tpch_bench(endpoint, scale_factor, template, mode, times = 5)
         query_name = File.basename(query).sub(/.sparql$/, '')
         csv << [endpoint.name, scale_factor.sub('d', '.'), template, mode,
                 query_name, repetition, out[0], out[1]]
+        csv.flush
       end
     end
   end

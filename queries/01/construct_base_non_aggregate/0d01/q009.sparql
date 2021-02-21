@@ -13,7 +13,7 @@ WHERE {
             <l_discount>      ?l_discount ;
             <l_returnflag>    ?l_returnflag ;
             <l_linestatus>    ?l_linestatus .
-  FILTER (?l_shipdate <= "1998-09-21T00:00:00"^^xsd:dateTime)
+  FILTER (strdt(concat(str(?l_shipdate), 'T00:00:00'), xsd:dateTime) <= "1998-09-21T00:00:00"^^xsd:dateTime)
   BIND (URI(concat(
     "http://example.org/row/",
     "?s1=", ENCODE_FOR_URI(xsd:string(?l_returnflag)),
