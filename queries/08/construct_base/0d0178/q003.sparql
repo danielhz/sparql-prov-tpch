@@ -24,8 +24,8 @@ WHERE {
       ?n1       <n_region>        ?region .
       ?n2       <n_name>          ?nation . 
       ?region   <r_name>          "AFRICA" .
-      FILTER (?o_orderdate >= "1995-01-01T00:00:00"^^xsd:dateTime &&
-              ?o_orderdate <=  "1996-12-31T00:00:00"^^xsd:dateTime)
+      FILTER (strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) >= "1995-01-01T00:00:00"^^xsd:dateTime &&
+              strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) <=  "1996-12-31T00:00:00"^^xsd:dateTime)
       BIND(year(?o_orderdate) AS ?o_year)
       BIND((?l_extendedprice * (1 - ?l_discount)) AS ?volume)
     }
