@@ -24,8 +24,8 @@ WHERE {
             <l_discount>      ?l_discount ;
             <l_returnflag>    'R' .
   ?nation   <n_name>          ?n_name .
-  FILTER (?o_orderdate >= "1993-03-01T00:00:00"^^xsd:dateTime &&
-	  ?o_orderdate < "1993-06-01T00:00:00"^^xsd:dateTime)
+  FILTER (strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) >= "1993-03-01T00:00:00"^^xsd:dateTime &&
+	  strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) < "1993-06-01T00:00:00"^^xsd:dateTime)
   BIND (URI(concat(
     "http://example.org/row/",
     "?s1=", ENCODE_FOR_URI(xsd:string(?customer)),
