@@ -24,26 +24,65 @@ library(stringi)
 library(patternplot)
 
 get.se <- function(y) {
- se <- sd(y)/sqrt(length(y))
- mu <- mean(y)
- c(ymin=mu-se, ymax=mu+se)
+  se <- sd(y)/sqrt(length(y))
+  mu <- mean(y)
+  c(ymin=mu-se, ymax=mu+se)
 }
 ```
 
 Load the data.
 
 ```{r}
-time_results <- 
+results <- 
     list.files(path = "results", pattern = "*.csv", full.names = TRUE) %>% 
     map_df(~fread(.))
 
-time_results$time <- with(time_results, time * 1000)
+# Engine
+results$engine[results$engine == "fuseki"] <- "Fuseki"
+results$engine[results$engine == "virtuoso"] <- "Virtuoso"
+
+# Classes: select and construct
+results$query_type[results$mode == "base"] <- "select"
+results$query_type[results$mode == "base_non_aggregate"] <- "select"
+results$query_type[results$mode == "prov_naryrel"] <- "select"
+results$query_type[results$mode == "prov_naryrel_non_aggregate"] <- "select"
+results$query_type[results$mode == "construct_base"] <- "construct"
+results$query_type[results$mode == "construct_base_non_aggregate"] <- "construct"
+results$query_type[results$mode == "construct_prov_naryrel"] <- "construct"
+results$query_type[results$mode == "construct_prov_naryrel_non_aggregate"] <- "construct"
+
+# Mode
+results$mode[results$mode == "base"] <- "Ba"
+results$mode[results$mode == "base_non_aggregate"] <- "Bn"
+results$mode[results$mode == "prov_naryrel"] <- "Pa"
+results$mode[results$mode == "prov_naryrel_non_aggregate"] <- "Pn"
+results$mode[results$mode == "construct_base"] <- "Ba"
+results$mode[results$mode == "construct_base_non_aggregate"] <- "Bn"
+results$mode[results$mode == "construct_prov_naryrel"] <- "Pa"
+results$mode[results$mode == "construct_prov_naryrel_non_aggregate"] <- "Pn"
+
+# Classes: base and rewritten
+results$rewritten[results$mode == "Ba"] <- "base"
+results$rewritten[results$mode == "Bn"] <- "base"
+results$rewritten[results$mode == "Pa"] <- "rewritten"
+results$rewritten[results$mode == "Pn"] <- "rewritten"
+
+# Classes: aggregate vs non aggregate
+results$aggregate[results$mode == "Ba"] <- "aggregate"
+results$aggregate[results$mode == "Bn"] <- "non aggregate"
+results$aggregate[results$mode == "Pa"] <- "aggregate"
+results$aggregate[results$mode == "Pn"] <- "non aggregate"
+
+# Mode and engine
+results$engine_mode = paste(results$engine, results$mode)
+
+results$time <- with(results, time * 1000)
 
 tpch.plot_select_by_template <- function(template_id) {
-  p <- ggplot(time_results %>% filter(time < 300000
+  p <- ggplot(results %>% filter(time < 300000
                                        & status == 200
                                        & template == template_id
-                                       & !grepl("construct", mode)),
+                                       & query_type == "select"),
     aes(x=scale_factor, y=time, fill=mode)) +
     ggtitle(paste("Query template", template_id)) +
     facet_wrap(~engine, ncol = 2) +
@@ -68,6 +107,135 @@ tpch.plot_select_by_template <- function(template_id) {
 
   p
 }
+
+# Function to calculate the mean and the standard deviation for each group.
+# data : a data frame
+# varname : the name of a column containing the variable to be summariezed
+# groupnames : vector of column names to be used as grouping variables
+data_summary <- function(data, varname, groupnames) {
+  require(plyr)
+  summary_func <- function(x, col) {
+    c(mean=mean(x[[col]], na.rm=TRUE), sd=sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func, varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+```
+
+```{r}
+tpch.plot_lines_select_by_template <- function(template_id) {
+  # Summarize the data
+  df <- data_summary(results %>% filter(time < 300000
+                                 & status == 200
+                                 & template == template_id
+                                 & query_type == "select"
+                                 & scale_factor <= 1),
+                     varname="time",
+                     groupnames=c("template", "engine_mode", "scale_factor"))
+
+  p <- ggplot(df, aes(x=scale_factor, y=time,
+                      group=engine_mode,
+                      color=engine_mode)) +
+    #facet_wrap(~template, ncol = 2) +
+    # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
+    #               position=position_dodge(0.05)) +
+    geom_line() + geom_point() +
+    scale_color_brewer(palette="Paired") +
+    scale_x_continuous(trans='log10',
+                       labels=trans_format("log10", math_format(10^.x))) +
+    scale_y_continuous(trans='log10',
+                       labels=trans_format("log10", math_format(10^.x))) +
+    xlab("scale factor") + ylab("time (ms)") +
+    ggtitle(paste("Query template", template_id)) +
+    theme_bw(base_family = "Times")
+
+  # p <- ggplot(results %>% filter(time < 300000
+  #                                & engine == "fuseki"
+  #                                & status == 200
+  #                                & template == template_id
+  #                                & !grepl("construct", mode)),
+  #   aes(x=scale_factor, y=time, fill=mode)) +
+  #   ggtitle(paste("Query template", template_id)) +
+  #   geom_line() +
+  #   # facet_wrap(~engine, ncol = 2) +
+  #   # stat_summary(fun=mean,
+  #   #              position=position_dodge(preserve="single"), color="grey70") +
+  #   # geom_path() +
+  #   # geom_dotplot() +
+
+  #  geom_bar_pattern(stat = "identity",
+  #                   pattern_color = "white",
+  #                   pattern_fill = "black",
+  #                   aes(pattern = group)) +
+  # scale_fill_manual(labels=labs,values=c("#009E73","#CC79A7","#0072B2")) +
+  # scale_fill_brewer(palette="OrRd")
+
+  p
+}
+
+tpch.plot_lines_select <- function() {
+  # Summarize the data
+  
+  df <- results %>% filter(time < 300000
+                           & status == 200
+                           & query_type == "select"
+                           & scale_factor <= 1)
+  
+  df$template <- paste("Query template", df$template) 
+  
+  df <- data_summary(df,
+                     varname="time",
+                     groupnames=c("template", "engine_mode", "scale_factor"))
+
+  p <- ggplot(df, aes(x=scale_factor, y=time, group=engine_mode,
+                      color=engine_mode, linetype=engine_mode)) +
+    facet_wrap(~template, ncol = 4) +
+    # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
+    #               position=position_dodge(0.05)) +
+    geom_line() + geom_point() +
+    scale_color_brewer(palette="Paired") +
+    scale_x_continuous(trans='log10',
+                       labels=trans_format("log10", math_format(10^.x))) +
+    scale_y_continuous(trans='log10',
+                       labels=trans_format("log10", math_format(10^.x))) +
+    xlab("scale factor") + ylab("time (ms)") +
+    #ggtitle(paste("Query template", template_id)) +
+    #theme_light(base_family = "Times")
+    theme_bw(base_family = "Times")
+
+  # p <- ggplot(results %>% filter(time < 300000
+  #                                & engine == "fuseki"
+  #                                & status == 200
+  #                                & template == template_id
+  #                                & !grepl("construct", mode)),
+  #   aes(x=scale_factor, y=time, fill=mode)) +
+  #   ggtitle(paste("Query template", template_id)) +
+  #   geom_line() +
+  #   # facet_wrap(~engine, ncol = 2) +
+  #   # stat_summary(fun=mean,
+  #   #              position=position_dodge(preserve="single"), color="grey70") +
+  #   # geom_path() +
+  #   # geom_dotplot() +
+
+  #  geom_bar_pattern(stat = "identity",
+  #                   pattern_color = "white",
+  #                   pattern_fill = "black",
+  #                   aes(pattern = group)) +
+  # scale_fill_manual(labels=labs,values=c("#009E73","#CC79A7","#0072B2")) +
+  # scale_fill_brewer(palette="OrRd")
+
+  p
+}
+
+p_lines_select <- tpch.plot_lines_select()
+p_lines_select
+
+png(file="plots/select_queries_times.png",
+    res=500, width=6000, height=4000, pointsize=30)
+p_lines_select
+dev.off()
 ```
 
 Plot data by query.
