@@ -1,0 +1,11 @@
+engine,scale_factor,template,mode,query_id,repetition,time,status
+fuseki,5.63,14,base,q001,1,300,500
+fuseki,5.63,14,base,q002,1,300,500
+fuseki,5.63,14,base,q003,1,300,500
+fuseki,5.63,14,base,q004,1,300,500
+fuseki,5.63,14,base,q005,1,300,500
+fuseki,5.63,14,base,q006,1,300,500
+fuseki,5.63,14,base,q007,1,300,500
+fuseki,5.63,14,base,q008,1,300,500
+fuseki,5.63,14,base,q009,1,300,500
+fuseki,5.63,14,base,q010,1,300,500
