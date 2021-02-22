@@ -22,6 +22,6 @@ WHERE {
             <l_discount>      ?l_discount ;
             <l_returnflag>    'R' .
   ?nation   <n_name>          ?n_name .
-  FILTER (?o_orderdate >= "1993-09-01T00:00:00"^^xsd:dateTime &&
-	  ?o_orderdate < "1993-12-01T00:00:00"^^xsd:dateTime)
+  FILTER (strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) >= "1993-09-01T00:00:00"^^xsd:dateTime &&
+	  strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) < "1993-12-01T00:00:00"^^xsd:dateTime)
 }

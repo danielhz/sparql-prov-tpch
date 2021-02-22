@@ -40,8 +40,8 @@ WHERE {
 		<l_discount>      ?l_discount ;
 		<l_returnflag>    'R' .
       ?nation   <n_name>          ?n_name .
-      FILTER (?o_orderdate >= "1994-06-01T00:00:00"^^xsd:dateTime &&
-	      ?o_orderdate < "1994-09-01T00:00:00"^^xsd:dateTime)
+      FILTER (strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) >= "1994-06-01T00:00:00"^^xsd:dateTime &&
+	      strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) < "1994-09-01T00:00:00"^^xsd:dateTime)
     }
     GROUP BY
       ?customer
@@ -80,8 +80,8 @@ WHERE {
 		<l_discount>      ?l_discount ;
 		<l_returnflag>    'R' .
       ?nation   <n_name>          ?n_name .
-      FILTER (?o_orderdate >= "1994-06-01T00:00:00"^^xsd:dateTime &&
-	      ?o_orderdate < "1994-09-01T00:00:00"^^xsd:dateTime)
+      FILTER (strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) >= "1994-06-01T00:00:00"^^xsd:dateTime &&
+	      strdt(concat(str(?o_orderdate), 'T00:00:00'), xsd:dateTime) < "1994-09-01T00:00:00"^^xsd:dateTime)
       BIND (?customer AS ?p_Sum_summand_Product_factor_1_Statement)
       BIND (?order    AS ?p_Sum_summand_Product_factor_2_Statement)
       BIND (?lineitem AS ?p_Sum_summand_Product_factor_3_Statement)
