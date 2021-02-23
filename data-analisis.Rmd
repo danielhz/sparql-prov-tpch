@@ -125,118 +125,98 @@ data_summary <- function(data, varname, groupnames) {
 ```
 
 ```{r}
-tpch.plot_lines_select_by_template <- function(template_id) {
-  # Summarize the data
-  df <- data_summary(results %>% filter(time < 300000
-                                 & status == 200
-                                 & template == template_id
-                                 & query_type == "select"
-                                 & scale_factor <= 1),
-                     varname="time",
-                     groupnames=c("template", "engine_mode", "scale_factor"))
-
-  p <- ggplot(df, aes(x=scale_factor, y=time,
-                      group=engine_mode,
-                      color=engine_mode)) +
-    #facet_wrap(~template, ncol = 2) +
-    # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
-    #               position=position_dodge(0.05)) +
-    geom_line() + geom_point() +
-    scale_color_brewer(palette="Paired") +
-    scale_x_continuous(trans='log10',
-                       labels=trans_format("log10", math_format(10^.x))) +
-    scale_y_continuous(trans='log10',
-                       labels=trans_format("log10", math_format(10^.x))) +
-    xlab("scale factor") + ylab("time (ms)") +
-    ggtitle(paste("Query template", template_id)) +
-    theme_bw(base_family = "Times")
-
-  # p <- ggplot(results %>% filter(time < 300000
-  #                                & engine == "fuseki"
-  #                                & status == 200
-  #                                & template == template_id
-  #                                & !grepl("construct", mode)),
-  #   aes(x=scale_factor, y=time, fill=mode)) +
-  #   ggtitle(paste("Query template", template_id)) +
-  #   geom_line() +
-  #   # facet_wrap(~engine, ncol = 2) +
-  #   # stat_summary(fun=mean,
-  #   #              position=position_dodge(preserve="single"), color="grey70") +
-  #   # geom_path() +
-  #   # geom_dotplot() +
-
-  #  geom_bar_pattern(stat = "identity",
-  #                   pattern_color = "white",
-  #                   pattern_fill = "black",
-  #                   aes(pattern = group)) +
-  # scale_fill_manual(labels=labs,values=c("#009E73","#CC79A7","#0072B2")) +
-  # scale_fill_brewer(palette="OrRd")
-
-  p
-}
-
-tpch.plot_lines_select <- function() {
-  # Summarize the data
+# Summarize results
+results_summary <- results %>% filter(time < 300000
+                                      & status == 200
+                                      & query_type == "select"
+                                      & scale_factor <= 1)
   
-  df <- results %>% filter(time < 300000
-                           & status == 200
-                           & query_type == "select"
-                           & scale_factor <= 1)
+results_summary$template <- paste("Query template",
+                                  sprintf("%02d", results_summary$template)) 
   
-  df$template <- paste("Query template", sprintf("%02d", df$template)) 
-  
-  df <- data_summary(df,
-                     varname="time",
-                     groupnames=c("template", "engine_mode", "scale_factor"))
+results_summary <- data_summary(results_summary,
+                                varname="time",
+                                groupnames=c("template", "engine_mode", "scale_factor"))
 
-  p <- ggplot(df, aes(x=scale_factor, y=time, group=engine_mode,
-                      color=engine_mode, linetype=engine_mode,
-                      shape=engine_mode)) +
-    facet_wrap(~template, ncol = 4) +
-    # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
-    #               position=position_dodge(0.05)) +
-    geom_line() + geom_point() +
-    scale_color_brewer(palette="Paired") +
-    scale_x_continuous(trans='log10',
-                       labels=trans_format("log10", math_format(10^.x))) +
-    scale_y_continuous(trans='log10',
-                       labels=trans_format("log10", math_format(10^.x))) +
-    xlab("scale factor") + ylab("time (ms)") +
-    #ggtitle(paste("Query template", template_id)) +
-    #theme_light(base_family = "Times")
-    theme_bw(base_family = "Times") +
-    scale_shape_manual(values = 0:7)
+p_lines_select <- ggplot(results_summary, aes(x=scale_factor, y=time, group=engine_mode,
+                                              color=engine_mode, linetype=engine_mode,
+                                              shape=engine_mode)) +
+  facet_wrap(~template, ncol = 4) +
+  # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
+  #               position=position_dodge(0.05)) +
+  geom_line() + geom_point() +
+  scale_color_brewer(palette="Paired") +
+  scale_x_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  xlab("scale factor") + ylab("time (ms)") +
+  # ggtitle(paste("Query template", template_id)) +
+  theme_bw(base_family = "Times") +
+  scale_shape_manual(values = 0:7)
 
-  # p <- ggplot(results %>% filter(time < 300000
-  #                                & engine == "fuseki"
-  #                                & status == 200
-  #                                & template == template_id
-  #                                & !grepl("construct", mode)),
-  #   aes(x=scale_factor, y=time, fill=mode)) +
-  #   ggtitle(paste("Query template", template_id)) +
-  #   geom_line() +
-  #   # facet_wrap(~engine, ncol = 2) +
-  #   # stat_summary(fun=mean,
-  #   #              position=position_dodge(preserve="single"), color="grey70") +
-  #   # geom_path() +
-  #   # geom_dotplot() +
-
-  #  geom_bar_pattern(stat = "identity",
-  #                   pattern_color = "white",
-  #                   pattern_fill = "black",
-  #                   aes(pattern = group)) +
-  # scale_fill_manual(labels=labs,values=c("#009E73","#CC79A7","#0072B2")) +
-  # scale_fill_brewer(palette="OrRd")
-
-  p
-}
-
-p_lines_select <- tpch.plot_lines_select()
 p_lines_select
 
 png(file="plots/select_queries_times.png",
     res=500, width=6000, height=4000, pointsize=30)
 p_lines_select
+dev.off()
+```
+```{r}
+# Summarize results by query instance.
+summarized_results <- data_summary(filter(results,
+                                          time < 300000
+                                          & status == 200
+                                          & query_type == "select"),
+                                   varname="time",
+                                   groupnames=c("template", "engine",
+                                                "scale_factor",
+                                                "query_id",
+                                                "rewritten", "aggregate"))
+
+data_base <-
+  summarized_results %>% filter(rewritten == "base") %>% select(-"rewritten", -"sd")
+data_rewritten <-
+  summarized_results %>% filter(rewritten == "rewritten") %>% select(-"rewritten", -"sd")
+names(data_base)[names(data_base)=="time"] <- "base_time"
+names(data_rewritten)[names(data_rewritten)=="time"] <- "rewritten_time"
+
+overhead_data <- join(data_base, data_rewritten)
+overhead_data$ratio <- overhead_data$rewritten_time/overhead_data$base_time
+
+summarized_overhead <- data_summary(overhead_data,
+                                    varname="ratio",
+                                    groupnames=c("template", "engine",
+                                                 "scale_factor", "aggregate"))
+summarized_overhead$engine_mode <-
+  paste(summarized_overhead$engine, summarized_overhead$aggregate)
+summarized_overhead$template <-
+  paste("Query template", sprintf("%02d", summarized_overhead$template))
+
+p_overhead_select <-
+  ggplot(summarized_overhead %>% filter(scale_factor <= 1),
+         aes(x=scale_factor, y=ratio, group=engine_mode,
+             color=engine_mode, linetype=engine_mode,
+             shape=engine_mode)) +
+  facet_wrap(~template, ncol = 4) +
+  # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
+  #               position=position_dodge(0.05)) +
+  geom_line() + geom_point() +
+  scale_color_brewer(palette="Paired") +
+  scale_x_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  xlab("scale factor") + ylab("ratio P/B") +
+  # ggtitle(paste("Query template", template_id)) +
+  theme_bw(base_family = "Times") +
+  scale_shape_manual(values = 0:7)
+
+p_overhead_select
+
+png(file="plots/select_queries_overheads.png",
+    res=500, width=6000, height=4000, pointsize=30)
+p_overhead_select
 dev.off()
 ```
 
