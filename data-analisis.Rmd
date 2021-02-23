@@ -131,7 +131,7 @@ results_summary <- results %>% filter(time < 300000
                                       & query_type == "select"
                                       & scale_factor <= 1)
   
-results_summary$template <- paste("Query template",
+results_summary$template <- paste("query template",
                                   sprintf("%02d", results_summary$template)) 
   
 results_summary <- data_summary(results_summary,
@@ -151,14 +151,16 @@ p_lines_select <- ggplot(results_summary, aes(x=scale_factor, y=time, group=engi
   scale_y_continuous(trans='log10',
                      labels=trans_format("log10", math_format(10^.x))) +
   xlab("scale factor") + ylab("time (ms)") +
-  # ggtitle(paste("Query template", template_id)) +
   theme_bw(base_family = "Times") +
-  scale_shape_manual(values = 0:7)
+  scale_shape_manual(values = 0:7) +
+  labs(colour = "engine and mode:",
+       linetype = "engine and mode:",
+       shape = "engine and mode:")
 
 p_lines_select
 
 png(file="plots/select_queries_times.png",
-    res=500, width=6000, height=4000, pointsize=30)
+    res=500, width=6000, height=4000, pointsize=25)
 p_lines_select
 dev.off()
 ```
@@ -191,7 +193,7 @@ summarized_overhead <- data_summary(overhead_data,
 summarized_overhead$engine_mode <-
   paste(summarized_overhead$engine, summarized_overhead$aggregate)
 summarized_overhead$template <-
-  paste("Query template", sprintf("%02d", summarized_overhead$template))
+  paste("query template", sprintf("%02d", summarized_overhead$template))
 
 p_overhead_select <-
   ggplot(summarized_overhead %>% filter(scale_factor <= 1),
@@ -208,14 +210,19 @@ p_overhead_select <-
   scale_y_continuous(trans='log10',
                      labels=trans_format("log10", math_format(10^.x))) +
   xlab("scale factor") + ylab("ratio P/B") +
-  # ggtitle(paste("Query template", template_id)) +
   theme_bw(base_family = "Times") +
-  scale_shape_manual(values = 0:7)
+  scale_shape_manual(values = 0:7) +
+  theme(legend.position="top",
+        legend.box.margin = margin(0, 0, 0, 0, "pt"),
+        legend.box.spacing = unit(0, "pt")) +
+  labs(colour = "engine and mode:",
+       linetype = "engine and mode:",
+       shape = "engine and mode:")
 
 p_overhead_select
 
 png(file="plots/select_queries_overheads.png",
-    res=500, width=6000, height=4000, pointsize=30)
+    res=500, width=6000, height=4000, pointsize=20)
 p_overhead_select
 dev.off()
 ```
