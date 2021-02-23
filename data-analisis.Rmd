@@ -183,14 +183,15 @@ tpch.plot_lines_select <- function() {
                            & query_type == "select"
                            & scale_factor <= 1)
   
-  df$template <- paste("Query template", df$template) 
+  df$template <- paste("Query template", sprintf("%02d", df$template)) 
   
   df <- data_summary(df,
                      varname="time",
                      groupnames=c("template", "engine_mode", "scale_factor"))
 
   p <- ggplot(df, aes(x=scale_factor, y=time, group=engine_mode,
-                      color=engine_mode, linetype=engine_mode)) +
+                      color=engine_mode, linetype=engine_mode,
+                      shape=engine_mode)) +
     facet_wrap(~template, ncol = 4) +
     # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
     #               position=position_dodge(0.05)) +
@@ -203,7 +204,8 @@ tpch.plot_lines_select <- function() {
     xlab("scale factor") + ylab("time (ms)") +
     #ggtitle(paste("Query template", template_id)) +
     #theme_light(base_family = "Times")
-    theme_bw(base_family = "Times")
+    theme_bw(base_family = "Times") +
+    scale_shape_manual(values = 0:7)
 
   # p <- ggplot(results %>% filter(time < 300000
   #                                & engine == "fuseki"
