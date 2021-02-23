@@ -1,0 +1,11 @@
+engine,scale_factor,template,mode,query_id,repetition,time,status
+fuseki,1,10,prov_naryrel,q001,1,300,500
+fuseki,1,10,prov_naryrel,q002,1,300,500
+fuseki,1,10,prov_naryrel,q003,1,300,500
+fuseki,1,10,prov_naryrel,q004,1,300,500
+fuseki,1,10,prov_naryrel,q005,1,300,500
+fuseki,1,10,prov_naryrel,q006,1,300,500
+fuseki,1,10,prov_naryrel,q007,1,300,500
+fuseki,1,10,prov_naryrel,q008,1,300,500
+fuseki,1,10,prov_naryrel,q009,1,300,500
+fuseki,1,10,prov_naryrel,q010,1,300,500
