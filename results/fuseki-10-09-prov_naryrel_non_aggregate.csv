@@ -1,0 +1,11 @@
+engine,scale_factor,template,mode,query_id,repetition,time,status
+fuseki,10,09,prov_naryrel_non_aggregate,q001,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q002,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q003,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q004,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q005,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q006,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q007,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q008,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q009,1,300,500
+fuseki,10,09,prov_naryrel_non_aggregate,q010,1,300,500
