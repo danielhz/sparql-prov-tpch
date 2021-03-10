@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "TPC-H experiment"
 output: html_notebook
 ---
 
@@ -24,26 +24,65 @@ library(stringi)
 library(patternplot)
 
 get.se <- function(y) {
- se <- sd(y)/sqrt(length(y))
- mu <- mean(y)
- c(ymin=mu-se, ymax=mu+se)
+  se <- sd(y)/sqrt(length(y))
+  mu <- mean(y)
+  c(ymin=mu-se, ymax=mu+se)
 }
 ```
 
 Load the data.
 
 ```{r}
-time_results <- 
+results <- 
     list.files(path = "results", pattern = "*.csv", full.names = TRUE) %>% 
     map_df(~fread(.))
 
-time_results$time <- with(time_results, time * 1000)
+# Engine
+results$engine[results$engine == "fuseki"] <- "Fuseki"
+results$engine[results$engine == "virtuoso"] <- "Virtuoso"
+
+# Classes: select and construct
+results$query_type[results$mode == "base"] <- "select"
+results$query_type[results$mode == "base_non_aggregate"] <- "select"
+results$query_type[results$mode == "prov_naryrel"] <- "select"
+results$query_type[results$mode == "prov_naryrel_non_aggregate"] <- "select"
+results$query_type[results$mode == "construct_base"] <- "construct"
+results$query_type[results$mode == "construct_base_non_aggregate"] <- "construct"
+results$query_type[results$mode == "construct_prov_naryrel"] <- "construct"
+results$query_type[results$mode == "construct_prov_naryrel_non_aggregate"] <- "construct"
+
+# Mode
+results$mode[results$mode == "base"] <- "R1"
+results$mode[results$mode == "base_non_aggregate"] <- "R2"
+results$mode[results$mode == "prov_naryrel"] <- "P1"
+results$mode[results$mode == "prov_naryrel_non_aggregate"] <- "P2"
+results$mode[results$mode == "construct_base"] <- "R1"
+results$mode[results$mode == "construct_base_non_aggregate"] <- "R2"
+results$mode[results$mode == "construct_prov_naryrel"] <- "P1"
+results$mode[results$mode == "construct_prov_naryrel_non_aggregate"] <- "P2"
+
+# Classes: base and rewritten
+results$rewritten[results$mode == "R1"] <- "base"
+results$rewritten[results$mode == "R2"] <- "base"
+results$rewritten[results$mode == "P1"] <- "rewritten"
+results$rewritten[results$mode == "P2"] <- "rewritten"
+
+# Classes: aggregate vs non aggregate
+results$aggregate[results$mode == "R1"] <- "aggregate"
+results$aggregate[results$mode == "R2"] <- "non aggregate"
+results$aggregate[results$mode == "P1"] <- "aggregate"
+results$aggregate[results$mode == "P2"] <- "non aggregate"
+
+# Mode and engine
+results$engine_mode = paste(results$engine, results$mode)
+
+results$time <- with(results, time * 1000)
 
 tpch.plot_select_by_template <- function(template_id) {
-  p <- ggplot(time_results %>% filter(time < 300000
+  p <- ggplot(results %>% filter(time < 300000
                                        & status == 200
                                        & template == template_id
-                                       & !grepl("construct", mode)),
+                                       & query_type == "select"),
     aes(x=scale_factor, y=time, fill=mode)) +
     ggtitle(paste("Query template", template_id)) +
     facet_wrap(~engine, ncol = 2) +
@@ -68,96 +107,130 @@ tpch.plot_select_by_template <- function(template_id) {
 
   p
 }
-```
 
-Plot data by query.
+# Function to calculate the mean and the standard deviation for each group.
+# data : a data frame
+# varname : the name of a column containing the variable to be summariezed
+# groupnames : vector of column names to be used as grouping variables
+data_summary <- function(data, varname, groupnames) {
+  require(plyr)
+  summary_func <- function(x, col) {
+    c(mean=mean(x[[col]], na.rm=TRUE), sd=sd(x[[col]], na.rm=TRUE))
+  }
+  data_sum<-ddply(data, groupnames, .fun=summary_func, varname)
+  data_sum <- rename(data_sum, c("mean" = varname))
+  return(data_sum)
+}
+
+```
 
 ```{r}
-p01 <- tpch.plot_select_by_template(1)
-p01
+# Summarize results
+results_summary <- results %>% filter(time < 300000
+                                      & status == 200
+                                      & query_type == "select"
+                                      & scale_factor <= 1)
+  
+results_summary$template <- paste("template",
+                                  sprintf("%02d", results_summary$template)) 
+  
+results_summary <- data_summary(results_summary,
+                                varname="time",
+                                groupnames=c("template", "engine_mode",
+                                             "scale_factor", "engine",
+                                             "mode"))
 
-png(file="plots/select_for_query_template_01.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p01
-dev.off()
+p_lines_select <- ggplot(results_summary, # %>% filter(template == "query 07"),
+                         aes(x=scale_factor, y=time,
+                             group=engine_mode,
+                             shape=engine,
+                             linetype=mode,
+                             color=engine)) +
+  facet_wrap(~template, ncol = 4) +
+  # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
+  #               position=position_dodge(0.05)) +
+  geom_line() + geom_point() +
+  scale_x_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  xlab("scale factor") + ylab("runtime (ms)") +
+  #scale_color_manual(name="Groups",values=c("red", "red", "red",
+  #                                          "blue", "blue", "blue")) +
+  theme_minimal(base_family = "Times") +
+  #scale_shape_manual(values = 0:7) +
+  scale_linetype_manual(values = 1:4) +
+  theme(legend.position="top",
+        legend.box.margin = margin(0, 0, 0, 0, "pt"),
+        legend.box.spacing = unit(0, "pt"))
 
-p03 <- tpch.plot_select_by_template(3)
-p03
+p_lines_select
 
-png(file="plots/select_for_query_template_03.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p03
-dev.off()
-
-p05 <- tpch.plot_select_by_template(5)
-p05
-
-png(file="plots/select_for_query_template_05.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p05
-dev.off()
-
-p06 <- tpch.plot_select_by_template(6)
-p06
-
-png(file="plots/select_for_query_template_06.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p06
-dev.off()
-
-p07 <- tpch.plot_select_by_template(7)
-p07
-
-png(file="plots/select_for_query_template_07.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p07
-dev.off()
-
-p08 <- tpch.plot_select_by_template(8)
-p08
-
-png(file="plots/select_for_query_template_08.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p08
-dev.off()
-
-p09 <- tpch.plot_select_by_template(9)
-p09
-
-png(file="plots/select_for_query_template_09.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p09
-dev.off()
-
-p10 <- tpch.plot_select_by_template(10)
-p10
-
-png(file="plots/select_for_query_template_10.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p10
-dev.off()
-
-p12 <- tpch.plot_select_by_template(12)
-p12
-
-png(file="plots/select_for_query_template_12.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p12
-dev.off()
-
-p14 <- tpch.plot_select_by_template(14)
-p14
-
-png(file="plots/select_for_query_template_14.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p14
-dev.off()
-
-p19 <- tpch.plot_select_by_template(19)
-p19
-
-png(file="plots/select_for_query_template_19.png",
-    res=500, width=6000, height=2400, pointsize=1)
-p19
+png(file="plots/select_queries_times.png",
+    res=600, width=6000, height=3000, pointsize=20)
+p_lines_select
 dev.off()
 ```
+```{r}
+# Summarize results by query instance.
+summarized_results <- data_summary(filter(results,
+                                          time < 300000
+                                          & status == 200
+                                          & query_type == "select"),
+                                   varname="time",
+                                   groupnames=c("template", "engine",
+                                                "scale_factor",
+                                                "query_id",
+                                                "rewritten", "aggregate"))
+
+data_base <-
+  summarized_results %>% filter(rewritten == "base") %>% select(-"rewritten", -"sd")
+data_rewritten <-
+  summarized_results %>% filter(rewritten == "rewritten") %>% select(-"rewritten", -"sd")
+names(data_base)[names(data_base)=="time"] <- "base_time"
+names(data_rewritten)[names(data_rewritten)=="time"] <- "rewritten_time"
+
+overhead_data <- join(data_base, data_rewritten)
+overhead_data$ratio <- overhead_data$rewritten_time/overhead_data$base_time
+
+summarized_overhead <- data_summary(overhead_data,
+                                    varname="ratio",
+                                    groupnames=c("template", "engine",
+                                                 "scale_factor", "aggregate"))
+summarized_overhead$engine_mode <-
+  paste(summarized_overhead$engine, summarized_overhead$aggregate)
+summarized_overhead$template <-
+  paste("query template", sprintf("%02d", summarized_overhead$template))
+
+p_overhead_select <-
+  ggplot(summarized_overhead %>% filter(scale_factor <= 1),
+         aes(x=scale_factor, y=ratio, group=engine_mode,
+             color=engine_mode, linetype=engine_mode,
+             shape=engine_mode)) +
+  facet_wrap(~template, ncol = 4) +
+  # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
+  #               position=position_dodge(0.05)) +
+  geom_line() + geom_point() +
+  scale_color_brewer(palette="Paired") +
+  scale_x_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  scale_y_continuous(trans='log10',
+                     labels=trans_format("log10", math_format(10^.x))) +
+  xlab("scale factor") + ylab("ratio P/B") +
+  theme_bw(base_family = "Times") +
+  scale_shape_manual(values = 0:7) +
+  theme(legend.position="top",
+        legend.box.margin = margin(0, 0, 0, 0, "pt"),
+        legend.box.spacing = unit(0, "pt")) +
+  labs(colour = "engine and mode:",
+       linetype = "engine and mode:",
+       shape = "engine and mode:")
+
+p_overhead_select
+
+png(file="plots/select_queries_overheads.png",
+    res=500, width=6000, height=4000, pointsize=20)
+p_overhead_select
+dev.off()
+```
+
