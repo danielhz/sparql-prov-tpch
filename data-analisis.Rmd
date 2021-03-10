@@ -1,5 +1,5 @@
 ---
-title: "R Notebook"
+title: "TPC-H experiment"
 output: html_notebook
 ---
 
@@ -52,26 +52,26 @@ results$query_type[results$mode == "construct_prov_naryrel"] <- "construct"
 results$query_type[results$mode == "construct_prov_naryrel_non_aggregate"] <- "construct"
 
 # Mode
-results$mode[results$mode == "base"] <- "Ba"
-results$mode[results$mode == "base_non_aggregate"] <- "Bn"
-results$mode[results$mode == "prov_naryrel"] <- "Pa"
-results$mode[results$mode == "prov_naryrel_non_aggregate"] <- "Pn"
-results$mode[results$mode == "construct_base"] <- "Ba"
-results$mode[results$mode == "construct_base_non_aggregate"] <- "Bn"
-results$mode[results$mode == "construct_prov_naryrel"] <- "Pa"
-results$mode[results$mode == "construct_prov_naryrel_non_aggregate"] <- "Pn"
+results$mode[results$mode == "base"] <- "R1"
+results$mode[results$mode == "base_non_aggregate"] <- "R2"
+results$mode[results$mode == "prov_naryrel"] <- "P1"
+results$mode[results$mode == "prov_naryrel_non_aggregate"] <- "P2"
+results$mode[results$mode == "construct_base"] <- "R1"
+results$mode[results$mode == "construct_base_non_aggregate"] <- "R2"
+results$mode[results$mode == "construct_prov_naryrel"] <- "P1"
+results$mode[results$mode == "construct_prov_naryrel_non_aggregate"] <- "P2"
 
 # Classes: base and rewritten
-results$rewritten[results$mode == "Ba"] <- "base"
-results$rewritten[results$mode == "Bn"] <- "base"
-results$rewritten[results$mode == "Pa"] <- "rewritten"
-results$rewritten[results$mode == "Pn"] <- "rewritten"
+results$rewritten[results$mode == "R1"] <- "base"
+results$rewritten[results$mode == "R2"] <- "base"
+results$rewritten[results$mode == "P1"] <- "rewritten"
+results$rewritten[results$mode == "P2"] <- "rewritten"
 
 # Classes: aggregate vs non aggregate
-results$aggregate[results$mode == "Ba"] <- "aggregate"
-results$aggregate[results$mode == "Bn"] <- "non aggregate"
-results$aggregate[results$mode == "Pa"] <- "aggregate"
-results$aggregate[results$mode == "Pn"] <- "non aggregate"
+results$aggregate[results$mode == "R1"] <- "aggregate"
+results$aggregate[results$mode == "R2"] <- "non aggregate"
+results$aggregate[results$mode == "P1"] <- "aggregate"
+results$aggregate[results$mode == "P2"] <- "non aggregate"
 
 # Mode and engine
 results$engine_mode = paste(results$engine, results$mode)
@@ -131,36 +131,43 @@ results_summary <- results %>% filter(time < 300000
                                       & query_type == "select"
                                       & scale_factor <= 1)
   
-results_summary$template <- paste("query template",
+results_summary$template <- paste("template",
                                   sprintf("%02d", results_summary$template)) 
   
 results_summary <- data_summary(results_summary,
                                 varname="time",
-                                groupnames=c("template", "engine_mode", "scale_factor"))
+                                groupnames=c("template", "engine_mode",
+                                             "scale_factor", "engine",
+                                             "mode"))
 
-p_lines_select <- ggplot(results_summary, aes(x=scale_factor, y=time, group=engine_mode,
-                                              color=engine_mode, linetype=engine_mode,
-                                              shape=engine_mode)) +
+p_lines_select <- ggplot(results_summary, # %>% filter(template == "query 07"),
+                         aes(x=scale_factor, y=time,
+                             group=engine_mode,
+                             shape=engine,
+                             linetype=mode,
+                             color=engine)) +
   facet_wrap(~template, ncol = 4) +
   # geom_errorbar(aes(ymin=time-sd, ymax=time+sd), width=.1,
   #               position=position_dodge(0.05)) +
   geom_line() + geom_point() +
-  scale_color_brewer(palette="Paired") +
   scale_x_continuous(trans='log10',
                      labels=trans_format("log10", math_format(10^.x))) +
   scale_y_continuous(trans='log10',
                      labels=trans_format("log10", math_format(10^.x))) +
-  xlab("scale factor") + ylab("time (ms)") +
-  theme_bw(base_family = "Times") +
-  scale_shape_manual(values = 0:7) +
-  labs(colour = "engine and mode:",
-       linetype = "engine and mode:",
-       shape = "engine and mode:")
+  xlab("scale factor") + ylab("runtime (ms)") +
+  #scale_color_manual(name="Groups",values=c("red", "red", "red",
+  #                                          "blue", "blue", "blue")) +
+  theme_minimal(base_family = "Times") +
+  #scale_shape_manual(values = 0:7) +
+  scale_linetype_manual(values = 1:4) +
+  theme(legend.position="top",
+        legend.box.margin = margin(0, 0, 0, 0, "pt"),
+        legend.box.spacing = unit(0, "pt"))
 
 p_lines_select
 
 png(file="plots/select_queries_times.png",
-    res=500, width=6000, height=4000, pointsize=25)
+    res=600, width=6000, height=3000, pointsize=20)
 p_lines_select
 dev.off()
 ```
