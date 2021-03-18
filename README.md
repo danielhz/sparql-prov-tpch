@@ -122,6 +122,18 @@ rake fuseki_tasks
 rake virtuoso_tasks
 ```
 
+## Generate the queries
+
+Queries are generated with two tasks.  First we generate the
+parameters using the `qgen` tool of the TPC-H benchmark, and then we
+generate the queries filling our templates with these parameters.
+These tasks are implemented in the following rake tasks:
+
+```bash
+rake parameters
+rake queries
+```
+
 ## Running the benchmark
 
 An experiment workload is defined by a combination of a query template
