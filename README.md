@@ -27,8 +27,7 @@ task_status                  # Status of the executed tasks
 ## Preparing the environment
 
 In this experiment we need three tools: LXD to install engines inside
-containers, Ruby to automatize the execution of benchmarks, and
-TripleProv.
+containers, Ruby to automatize the execution of benchmarks.
 
 ### Setup LXD
 
