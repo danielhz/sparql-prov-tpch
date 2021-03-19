@@ -1,7 +1,7 @@
 # Provenance for SPARQL queries via Query Rewiring: TPC-H benchmark
 
 This is the source code repository of a experiment to study a method
-for computing how-provenance for SPARQL via query rewriting.  This is
+for computing how-provenance for SPARQL via query rewriting.  This
 experiment is based on the TPC-H benchmark that is a well-known
 synthetic SQL benchmark for analytic queries.  We translate the
 dataset and the queries to RDF and SPARQL, respectively.
